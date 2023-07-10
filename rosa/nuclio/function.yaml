@@ -1,0 +1,44 @@
+metadata:
+  name: pth-yolov8
+  namespace: cvat
+  annotations:
+    name: YOLO v8 rosa
+    type: detector
+    framework: pytorch
+    spec: |
+      [
+        { "id": 0, "name": "rosa" },
+      ]
+
+spec:
+  description: YOLO v8 via pytorch local
+  runtime: 'python:3.9'
+  handler: main:handler
+  eventTimeout: 30s
+  build:
+    image: cvat.pth.ultralytics.yolov8-rosa
+    baseImage: ultralytics/yolov5:latest-cpu
+
+    directives:
+      preCopy:
+        - kind: USER
+          value: root
+        - kind: RUN
+          value: apt update && apt install --no-install-recommends -y libglib2.0-0
+        - kind: WORKDIR
+          value: /opt/nuclio
+
+  triggers:
+    myHttpTrigger:
+      maxWorkers: 2
+      kind: 'http'
+      workerAvailabilityTimeoutMilliseconds: 10000
+      attributes:
+        maxRequestBodySize: 33554432 # 32MB
+
+  platform:
+    attributes:
+      restartPolicy:
+        name: always
+        maximumRetryCount: 3
+      mountMode: volume
